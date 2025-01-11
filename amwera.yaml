@@ -1,0 +1,35 @@
+meta:
+  environment: python
+  toolchain:
+    name: pip
+    version: "3.13.0"
+
+build:
+  requirementsPath: requirements.txt  # Путь к файлу с зависимостями
+
+run:
+  command: python main.py  # Запуск основного кода бота
+  persistenceMount: /data  # Монтаж для сохранения данных
+  containerPort: 8080  # Порт для работы контейнера
+
+initContainers:
+  - name: install-dependencies
+    image: harbor.amvera.ru/amvera-hub/python:3.13.0  # Используем образ с Python 3.13
+    command: ["/bin/sh", "-c"]
+    args:
+      - |
+        apt-get update && \
+        pip install --no-cache-dir -r /app/requirements.txt  # Установка зависимостей из requirements.txt
+
+volumes:
+  - name: app-volume
+    persistentVolumeClaim:
+      claimName: app-pvc  # Если используется PVC для данных
+
+volumeMounts:
+  - name: app-volume
+    mountPath: /app  # Монтируем файл и данные в контейнер
+
+secrets:
+  - name: bot-token-secret
+    key: token  # Секретный токен бота
